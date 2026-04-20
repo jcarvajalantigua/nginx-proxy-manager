@@ -1,0 +1,140 @@
+# ================================================================
+# Jeturing Infrastructure Gateway
+# ================================================================
+# NPM (Nginx Proxy Manager) + Sidecar de Orquestación + Cloudflared
+# Corre en PCT 205 (10.10.20.205)
+#
+# Servicios:
+#   npm      → Proxy Manager (puertos 80, 443, 81)
+#   sidecar  → API de Orquestación con Swagger/Redoc (puerto 8888)
+#   tunnel   → Cloudflare Tunnel connector (expone NPM a internet)
+#
+# Uso:
+#   docker compose up -d
+#   Swagger: http://10.10.20.205:8888/docs
+#   ReDoc:   http://10.10.20.205:8888/redoc
+#   NPM UI:  http://10.10.20.205:81
+# ================================================================
+
+services:
+  # ──── Nginx Proxy Manager ────
+  npm:
+    image: jc21/nginx-proxy-manager:latest
+    container_name: npm
+    restart: unless-stopped
+    ports:
+      - "80:80"     # HTTP público (recibe tráfico de CF Tunnel)
+      - "443:443"   # HTTPS público
+      - "10.10.20.205:81:81"   # Panel admin — SOLO red local/VPN
+    environment:
+      TZ: "America/Santo_Domingo"
+      DB_SQLITE_FILE: "/data/database.sqlite"
+      DISABLE_IPV6: "true"
+      # Para PostgreSQL (futuro):
+      # DB_POSTGRES_HOST: "10.10.20.200"
+      # DB_POSTGRES_PORT: 5432
+      # DB_POSTGRES_USER: "npm_user"
+      # DB_POSTGRES_PASSWORD: "${NPM_DB_PASSWORD}"
+      # DB_POSTGRES_NAME: "npm_db"
+    volumes:
+      - npm_data:/data
+      - npm_letsencrypt:/etc/letsencrypt
+    healthcheck:
+      test: ["CMD", "/usr/bin/check-health"]
+      interval: 10s
+      timeout: 3s
+    networks:
+      - gateway
+
+  # ──── Sidecar de Orquestación (FastAPI) ────
+  sidecar:
+    build:
+      context: ./sidecar
+      dockerfile: Dockerfile
+    container_name: npm-sidecar
+    restart: unless-stopped
+    ports:
+      - "10.10.20.205:8888:8888"   # API — SOLO red local/VPN
+    environment:
+      TZ: "America/Santo_Domingo"
+      SIDECAR_NPM_API_URL: "http://npm:81/api"
+      SIDECAR_NPM_ADMIN_EMAIL: "soc@jeturing.com"
+      SIDECAR_NPM_ADMIN_PASSWORD: "321Abcd."
+      # Cloudflare
+      SIDECAR_CF_API_TOKEN: "${CF_API_TOKEN}"
+      SIDECAR_CF_ACCOUNT_ID: "${CF_ACCOUNT_ID}"
+      SIDECAR_CF_ZONE_ID: "4a83b88793ac3688486ace69b6ae80f9"
+      SIDECAR_CF_TUNNEL_ID: "${CF_TUNNEL_ID}"
+      # Red
+      SIDECAR_NETWORK_SUBNET: "10.10.20.0/24"
+      SIDECAR_LEGACY_SUBNET: "10.10.10.0/24"
+      # PCTs
+      SIDECAR_PCT_200_PG_HOST: "10.10.20.200"
+      SIDECAR_PCT_201_ODOO17_HOST: "10.10.20.201"
+      SIDECAR_PCT_201_ODOO17_PORT: "80"
+      SIDECAR_PCT_202_SAJET_HOST: "10.10.20.202"
+      SIDECAR_PCT_202_SAJET_PORT: "4443"
+      SIDECAR_PCT_203_REDIS_HOST: "10.10.20.203"
+      SIDECAR_PCT_204_ODOO19_HOST: "10.10.20.204"
+      SIDECAR_PCT_204_ODOO19_PORT: "80"
+      SIDECAR_PCT_205_NPM_HOST: "10.10.20.205"
+      SIDECAR_PCT_206_POSTAL_HOST: "10.10.20.206"
+      SIDECAR_PCT_206_POSTAL_HTTP_PORT: "443"
+      # SSH
+      SIDECAR_SSH_USER: "root"
+      SIDECAR_SSH_KEY_PATH: "/app/ssh/id_rsa"
+    volumes:
+      - ssh_keys:/app/ssh:ro  # Montar SSH keys para deploy remoto
+      - providers_data:/app/data  # Providers config (CF keys multi-tenant)
+    depends_on:
+      npm:
+        condition: service_healthy
+    networks:
+      - gateway
+
+  # ──── Cloudflare Tunnel Connector ────
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    container_name: npm-tunnel
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: "${CF_TUNNEL_TOKEN}"
+    depends_on:
+      npm:
+        condition: service_healthy
+    networks:
+      - gateway
+
+volumes:
+  npm_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /opt/npm/data
+  npm_letsencrypt:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /opt/npm/letsencrypt
+  ssh_keys:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /opt/npm/ssh
+  providers_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /opt/npm/providers
+
+networks:
+  gateway:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/24

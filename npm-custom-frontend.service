@@ -1,0 +1,13 @@
+[Unit]
+Description=Apply custom NPM frontend after container restart
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+ExecStartPre=/bin/bash -c 'until docker inspect -f "{{.State.Health.Status}}" npm 2>/dev/null | grep -q healthy; do sleep 3; done'
+ExecStart=/bin/bash /opt/npm-gateway/deploy-custom.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

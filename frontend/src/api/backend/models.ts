@@ -203,6 +203,20 @@ export interface Setting {
 	meta?: Record<string, any>;
 }
 
+export interface ErrorPageTemplate {
+	id: number;
+	proxyHostId: number | null;
+	name: string;
+	errorCodes: number[];
+	htmlContent: string;
+	variables: Record<string, string>;
+	isActive: boolean;
+	createdOn: string;
+	modifiedOn: string;
+	// Expansions:
+	proxyHost?: ProxyHost;
+}
+
 export interface DNSProvider {
 	id: string;
 	name: string;

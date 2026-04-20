@@ -21,12 +21,12 @@ export function SiteFooter() {
 						<ul className="list-inline list-inline-dots mb-0">
 							<li className="list-inline-item">
 								<a
-									href="https://github.com/NginxProxyManager/nginx-proxy-manager"
+									href="https://github.com/jeaboredo"
 									target="_blank"
 									className="link-secondary"
 									rel="noopener"
 								>
-									<T id="footer.github-fork" />
+									Jeturing en GitHub
 								</a>
 							</li>
 						</ul>
@@ -35,15 +35,12 @@ export function SiteFooter() {
 						<ul className="list-inline list-inline-dots mb-0">
 							<li className="list-inline-item">
 								© 2025{" "}
-								<a href="https://jc21.com" rel="noreferrer" target="_blank" className="link-secondary">
-									jc21.com
+								<a href="https://jeturing.com" rel="noreferrer" target="_blank" className="link-secondary">
+									Jeturing SRL
 								</a>
 							</li>
 							<li className="list-inline-item">
-								Theme by{" "}
-								<a href="https://tabler.io" rel="noreferrer" target="_blank" className="link-secondary">
-									Tabler
-								</a>
+								Infrastructure Gateway
 							</li>
 							<li className="list-inline-item">
 								<a
@@ -53,7 +50,7 @@ export function SiteFooter() {
 									rel="noopener"
 								>
 									{" "}
-									{getVersion()}{" "}
+									NPM {getVersion()}{" "}
 								</a>
 							</li>
 							{versionData?.updateAvailable && versionData?.latest && (
