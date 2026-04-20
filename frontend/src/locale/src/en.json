@@ -449,6 +449,27 @@
 	"http-only": {
 		"defaultMessage": "HTTP Only"
 	},
+	"infra": {
+		"defaultMessage": "Infrastructure"
+	},
+	"infra.dashboard": {
+		"defaultMessage": "Health & Status"
+	},
+	"infra.providers": {
+		"defaultMessage": "CF Providers"
+	},
+	"infra.tunnels": {
+		"defaultMessage": "Tunnels"
+	},
+	"infra.deploy": {
+		"defaultMessage": "Deploy"
+	},
+	"infra.lb": {
+		"defaultMessage": "Load Balancer"
+	},
+	"infra.settings": {
+		"defaultMessage": "Sidecar Settings"
+	},
 	"lets-encrypt": {
 		"defaultMessage": "Let's Encrypt"
 	},
@@ -679,6 +700,12 @@
 	},
 	"settings.default-site.redirect": {
 		"defaultMessage": "Redirect"
+	},
+	"settings.error-pages": {
+		"defaultMessage": "Error Pages"
+	},
+	"settings.error-pages.description": {
+		"defaultMessage": "Custom HTML error pages per proxy host or global. Use {{variable}} placeholders for dynamic content."
 	},
 	"setup.preamble": {
 		"defaultMessage": "Get started by creating your admin account."

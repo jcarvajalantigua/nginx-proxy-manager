@@ -109,3 +109,40 @@ Special thanks to [all of our contributors](https://github.com/NginxProxyManager
 1. [Found a bug?](https://github.com/NginxProxyManager/nginx-proxy-manager/issues)
 2. [Discussions](https://github.com/NginxProxyManager/nginx-proxy-manager/discussions)
 3. [Reddit](https://reddit.com/r/nginxproxymanager)
+
+---
+
+## Diagramas Mermaid
+
+### Vista general
+
+```mermaid
+flowchart TD
+    Client["Usuario / navegador / operador"] --> Entry["npm-custom"]
+    Client --> Frontend["Frontend / UI"]
+    Frontend --> Backend["Backend / API"]
+    Entry --> Runtime["Runtime local o productivo"]
+    Runtime --> Docker["Docker / compose"]
+    Runtime --> Tests["tests / smoke checks"]
+    Runtime --> Config["configuracion / variables / secretos"]
+    Runtime --> Logs["logs y verificacion"]
+```
+
+### Flujo de operacion
+
+```mermaid
+sequenceDiagram
+    actor User as Usuario
+    participant UI as Interfaz
+    participant Service as Servicio
+    participant Config as Configuracion
+    participant Store as Persistencia
+
+    User->>UI: Inicia flujo principal
+    UI->>Service: Solicita accion o recurso
+    Service->>Config: Carga entorno y reglas
+    Service->>Store: Lee o escribe estado si aplica
+    Store-->>Service: Resultado
+    Service-->>UI: Respuesta procesada
+    UI-->>User: Confirmacion, vista o error accionable
+```

@@ -52,6 +52,13 @@ export default defineConfig({
 		port: 5173,
 		strictPort: true,
 		allowedHosts: true,
+		proxy: {
+			"/sidecar-api": {
+				target: "http://10.10.20.205:8888",
+				changeOrigin: true,
+				rewrite: (path) => path.replace(/^\/sidecar-api/, ""),
+			},
+		},
 	},
 	test: {
 		environment: "happy-dom",

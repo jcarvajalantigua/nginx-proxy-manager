@@ -8,6 +8,7 @@ export * from "./useCheckVersion";
 export * from "./useDeadHost";
 export * from "./useDeadHosts";
 export * from "./useDnsProviders";
+export * from "./useErrorPageTemplates";
 export * from "./useHealth";
 export * from "./useHostReport";
 export * from "./useProxyHost";
@@ -20,3 +21,12 @@ export * from "./useStreams";
 export * from "./useTheme";
 export * from "./useUser";
 export * from "./useUsers";
+
+// ──── Sidecar (Infrastructure) ────
+export * from "./useInfraHealth";
+export * from "./useServiceInventory";
+export * from "./useProviders";
+export * from "./useTunnels";
+export * from "./useDeploy";
+export * from "./useLoadBalancer";
+export * from "./useSidecarSettings";

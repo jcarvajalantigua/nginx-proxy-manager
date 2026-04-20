@@ -241,7 +241,18 @@ const internalNginx = {
 			// Set the IPv6 setting for the host
 			host.ipv6 = internalNginx.ipv6Enabled();
 
-			locationsPromise.then(() => {
+			// Load error page templates for proxy hosts
+			let errorPagesPromise;
+			if (nice_host_type === "proxy_host" && host.id) {
+				errorPagesPromise = internalNginx.loadErrorPages(host.id).then((errorPages) => {
+					host.error_pages = errorPages;
+				});
+			} else {
+				host.error_pages = [];
+				errorPagesPromise = Promise.resolve();
+			}
+
+			Promise.all([locationsPromise, errorPagesPromise]).then(() => {
 				renderEngine
 					.parseAndRender(template, host)
 					.then((config_text) => {
@@ -420,6 +431,53 @@ const internalNginx = {
 	 * @returns {boolean}
 	 */
 	advancedConfigHasDefaultLocation: (cfg) => !!cfg.match(/^(?:.*;)?\s*?location\s*?\/\s*?{/im),
+
+	/**
+	 * Loads error page data for a proxy host, merging host-specific + global templates.
+	 * Returns an array like [{code: 502, file: "host_3_502.html"}, ...]
+	 *
+	 * @param   {number}  proxyHostId
+	 * @returns {Promise<Array>}
+	 */
+	loadErrorPages: async (proxyHostId) => {
+		try {
+			const errorPageTemplateModel = (await import("../models/error_page_template.js")).default;
+
+			// Get host-specific templates
+			const hostTemplates = await errorPageTemplateModel
+				.query()
+				.where("proxy_host_id", proxyHostId)
+				.andWhere("is_active", true);
+
+			// Get global templates
+			const globalTemplates = await errorPageTemplateModel
+				.query()
+				.whereNull("proxy_host_id")
+				.andWhere("is_active", true);
+
+			// Merge: host-specific overrides global for same error codes
+			const codeMap = new Map();
+
+			for (const tpl of globalTemplates) {
+				const codes = Array.isArray(tpl.error_codes) ? tpl.error_codes : JSON.parse(tpl.error_codes);
+				for (const code of codes) {
+					codeMap.set(code, { code, file: `global_${code}.html` });
+				}
+			}
+
+			for (const tpl of hostTemplates) {
+				const codes = Array.isArray(tpl.error_codes) ? tpl.error_codes : JSON.parse(tpl.error_codes);
+				for (const code of codes) {
+					codeMap.set(code, { code, file: `host_${proxyHostId}_${code}.html` });
+				}
+			}
+
+			return Array.from(codeMap.values());
+		} catch (err) {
+			debug(logger, `Could not load error pages for host ${proxyHostId}:`, err.message);
+			return [];
+		}
+	},
 
 	/**
 	 * @returns {boolean}

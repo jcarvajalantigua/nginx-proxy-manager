@@ -26,6 +26,14 @@ const RedirectionHosts = lazy(() => import("src/pages/Nginx/RedirectionHosts"));
 const DeadHosts = lazy(() => import("src/pages/Nginx/DeadHosts"));
 const Streams = lazy(() => import("src/pages/Nginx/Streams"));
 
+// ──── Infrastructure (Sidecar) Pages ────
+const InfraDashboard = lazy(() => import("src/pages/Infra/InfraDashboard"));
+const Providers = lazy(() => import("src/pages/Infra/Providers"));
+const Tunnels = lazy(() => import("src/pages/Infra/Tunnels"));
+const Deploy = lazy(() => import("src/pages/Infra/Deploy"));
+const LoadBalancer = lazy(() => import("src/pages/Infra/LoadBalancer"));
+const SidecarSettings = lazy(() => import("src/pages/Infra/SidecarSettings"));
+
 function Router() {
 	const health = useHealth();
 	const { authenticated } = useAuthState();
@@ -70,6 +78,13 @@ function Router() {
 							<Route path="/nginx/redirection" element={<RedirectionHosts />} />
 							<Route path="/nginx/404" element={<DeadHosts />} />
 							<Route path="/nginx/stream" element={<Streams />} />
+							{/* Infrastructure (Sidecar) Routes */}
+							<Route path="/infra" element={<InfraDashboard />} />
+							<Route path="/infra/providers" element={<Providers />} />
+							<Route path="/infra/tunnels" element={<Tunnels />} />
+							<Route path="/infra/deploy" element={<Deploy />} />
+							<Route path="/infra/lb" element={<LoadBalancer />} />
+							<Route path="/infra/settings" element={<SidecarSettings />} />
 							<Route path="/" element={<Dashboard />} />
 						</Routes>
 					</Suspense>

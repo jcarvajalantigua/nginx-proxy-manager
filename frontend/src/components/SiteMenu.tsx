@@ -6,6 +6,7 @@ import {
 	IconSettings,
 	IconShield,
 	IconUser,
+	IconServer,
 } from "@tabler/icons-react";
 import cn from "classnames";
 import React from "react";
@@ -101,6 +102,43 @@ const menuItems: MenuItem[] = [
 		label: "settings",
 		permissionSection: ADMIN,
 	},
+	{
+		icon: IconServer,
+		label: "infra",
+		permissionSection: ADMIN,
+		items: [
+			{
+				to: "/infra",
+				label: "infra.dashboard",
+				permissionSection: ADMIN,
+			},
+			{
+				to: "/infra/providers",
+				label: "infra.providers",
+				permissionSection: ADMIN,
+			},
+			{
+				to: "/infra/tunnels",
+				label: "infra.tunnels",
+				permissionSection: ADMIN,
+			},
+			{
+				to: "/infra/deploy",
+				label: "infra.deploy",
+				permissionSection: ADMIN,
+			},
+			{
+				to: "/infra/lb",
+				label: "infra.lb",
+				permissionSection: ADMIN,
+			},
+			{
+				to: "/infra/settings",
+				label: "infra.settings",
+				permissionSection: ADMIN,
+			},
+		],
+	},
 ];
 
 const getMenuItem = (item: MenuItem, onClick?: () => void) => {
@@ -148,7 +186,7 @@ const getMenuDropown = (item: MenuItem, onClick?: () => void) => {
 					role="button"
 				>
 					<span className="nav-link-icon d-md-none d-lg-inline-block">
-						<IconDeviceDesktop height={24} width={24} />
+						{item.icon ? React.createElement(item.icon, { height: 24, width: 24 }) : <IconDeviceDesktop height={24} width={24} />}
 					</span>
 					<span className="nav-link-title">
 						<T id={item.label} />

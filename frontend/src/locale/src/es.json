@@ -386,6 +386,27 @@
 	"http-only": {
 		"defaultMessage": "Solo HTTP"
 	},
+	"infra": {
+		"defaultMessage": "Infraestructura"
+	},
+	"infra.dashboard": {
+		"defaultMessage": "Estado & Salud"
+	},
+	"infra.providers": {
+		"defaultMessage": "Proveedores CF"
+	},
+	"infra.tunnels": {
+		"defaultMessage": "Túneles"
+	},
+	"infra.deploy": {
+		"defaultMessage": "Deploy"
+	},
+	"infra.lb": {
+		"defaultMessage": "Balanceador"
+	},
+	"infra.settings": {
+		"defaultMessage": "Config Sidecar"
+	},
 	"lets-encrypt": {
 		"defaultMessage": "Let's Encrypt"
 	},
