@@ -61,7 +61,13 @@ class NPMClient:
     # ──── Proxy Hosts ────
 
     async def list_proxy_hosts(self) -> list[dict]:
-        return await self._request("GET", "/nginx/proxy-hosts")
+        # NPM v2.14 valida estrictamente los query params; si no se envian,
+        # el backend custom convierte `expand`/`query` en null y responde 400.
+        return await self._request(
+            "GET",
+            "/nginx/proxy-hosts",
+            params={"expand": "certificate", "query": ""},
+        )
 
     async def get_proxy_host(self, host_id: int) -> dict:
         return await self._request("GET", f"/nginx/proxy-hosts/{host_id}")
