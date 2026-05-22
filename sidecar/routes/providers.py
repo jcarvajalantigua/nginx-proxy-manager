@@ -8,6 +8,7 @@ Almacena providers en JSON files bajo /data/providers/.
 """
 
 import json
+import os
 import uuid
 import httpx
 from pathlib import Path
