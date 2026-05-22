@@ -6,3 +6,4 @@ pydantic-settings==2.5.0
 python-dotenv==1.0.1
 asyncssh==2.18.0
 cloudflare==4.1.0
+sentry-sdk[fastapi]>=2.19.0

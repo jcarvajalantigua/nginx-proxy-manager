@@ -12,11 +12,63 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
+import sentry_sdk
+from sentry_sdk.integrations.fastapi import FastApiIntegration
+from sentry_sdk.integrations.httpx import HttpxIntegration
 from npm_client import npm_client
 from config import settings
 
 from routes import health, proxy_hosts, tunnels, deploy, npm_admin, providers
 from routes import settings_api, loadbalancer
+
+
+def _sentry_should_drop_transaction(name: str, path: str) -> bool:
+    text = f"{name} {path}".lower()
+    ignored_prefixes = (
+        "/docs",
+        "/redoc",
+        "/openapi.json",
+        "/favicon",
+        "/robots.txt",
+    )
+    return any(path.startswith(prefix) for prefix in ignored_prefixes) or "lifespan" in text
+
+
+def _sentry_traces_sampler(sampling_context):
+    transaction_context = sampling_context.get("transaction_context") or {}
+    name = transaction_context.get("name", "")
+    asgi_scope = sampling_context.get("asgi_scope") or {}
+    path = asgi_scope.get("path", "") or ""
+    if _sentry_should_drop_transaction(name, path):
+        return 0.0
+    return float(settings.sentry_trace_sample_rate)
+
+
+def _sentry_before_send_transaction(event, hint):
+    request = event.get("request") or {}
+    url = request.get("url", "") or ""
+    path = "/"
+    if url:
+        try:
+            from urllib.parse import urlparse
+            path = urlparse(url).path or "/"
+        except Exception:
+            path = "/"
+    if _sentry_should_drop_transaction(event.get("transaction", "") or "", path):
+        return None
+    return event
+
+
+if settings.sentry_dsn:
+    sentry_sdk.init(
+        dsn=settings.sentry_dsn,
+        environment=settings.sentry_environment,
+        server_name=settings.sentry_server_name,
+        traces_sampler=_sentry_traces_sampler,
+        integrations=[FastApiIntegration(), HttpxIntegration()],
+        before_send_transaction=_sentry_before_send_transaction,
+        auto_session_tracking=False,
+    )
 
 
 # ---- IP Whitelist ----

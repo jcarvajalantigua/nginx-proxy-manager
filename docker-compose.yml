@@ -83,6 +83,10 @@ services:
       # SSH
       SIDECAR_SSH_USER: "root"
       SIDECAR_SSH_KEY_PATH: "/app/ssh/id_rsa"
+      SIDECAR_SENTRY_DSN: "http://d48a666e446848e8b077c7bbe8225c73@10.10.20.205:8100/9"
+      SIDECAR_SENTRY_ENVIRONMENT: "production-sidecar"
+      SIDECAR_SENTRY_SERVER_NAME: "npm-sidecar-pct205"
+      SIDECAR_SENTRY_TRACE_SAMPLE_RATE: "1.0"
     volumes:
       - ssh_keys:/app/ssh:ro  # Montar SSH keys para deploy remoto
       - providers_data:/app/data  # Providers config (CF keys multi-tenant)

@@ -49,6 +49,12 @@ class Settings(BaseSettings):
     sidecar_port: int = Field(default=8888)
     debug: bool = Field(default=False)
 
+    # --- Observabilidad ---
+    sentry_dsn: str = Field(default="")
+    sentry_environment: str = Field(default="production-sidecar")
+    sentry_server_name: str = Field(default="npm-sidecar-pct205")
+    sentry_trace_sample_rate: float = Field(default=1.0)
+
     # --- Seguridad ---
     api_key: str = Field(default="", description="API key para acceso externo (futuro)")
     providers_file: str = Field(default="/app/data/providers.json", description="Archivo JSON de providers")
