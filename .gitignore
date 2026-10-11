@@ -12,3 +12,4 @@ docker/dev/resolv.conf
 # local secrets
 .env
 .env.*
+test/cypress/fixtures/*.pem
