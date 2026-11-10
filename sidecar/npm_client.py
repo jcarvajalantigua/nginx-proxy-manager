@@ -5,6 +5,9 @@ Maneja autenticación JWT y todas las operaciones CRUD.
 
 import httpx
 import asyncio
+import base64
+import json
+import time
 from typing import Optional
 from config import settings
 
@@ -17,10 +20,23 @@ class NPMClient:
         self._token: Optional[str] = None
         self._client = httpx.AsyncClient(timeout=30.0)
 
+    def _token_expired(self) -> bool:
+        """True si el JWT cacheado expiró (o no se puede leer su exp)."""
+        if not self._token:
+            return True
+        try:
+            seg = self._token.split(".")[1]
+            seg += "=" * (-len(seg) % 4)
+            claims = json.loads(base64.urlsafe_b64decode(seg))
+            return time.time() >= float(claims.get("exp", 0)) - 30
+        except Exception:
+            return False
+
     async def _ensure_auth(self):
         """Obtener o refrescar JWT token de NPM."""
-        if self._token:
+        if self._token and not self._token_expired():
             return
+        setattr(self, "_token", None)
         resp = await self._client.post(
             f"{self.base_url}/tokens",
             json={
@@ -41,7 +57,7 @@ class NPMClient:
         resp = await self._client.request(
             method, f"{self.base_url}{path}", headers=self._headers(), **kwargs
         )
-        if resp.status_code == 401:
+        if resp.status_code in (401, 400):
             # Token expirado, re-auth
             self._token = None
             await self._ensure_auth()
@@ -61,12 +77,12 @@ class NPMClient:
     # ──── Proxy Hosts ────
 
     async def list_proxy_hosts(self) -> list[dict]:
-        # NPM v2.14 valida estrictamente los query params; si no se envian,
-        # el backend custom convierte `expand`/`query` en null y responde 400.
+        # NPM valida estrictamente los query params. `query=` vacío responde
+        # 400 en la versión desplegada; omitirlo cuando no hay búsqueda.
         return await self._request(
             "GET",
             "/nginx/proxy-hosts",
-            params={"expand": "certificate", "query": ""},
+            params={"expand": "certificate"},
         )
 
     async def get_proxy_host(self, host_id: int) -> dict:

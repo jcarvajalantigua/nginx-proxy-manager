@@ -8,7 +8,6 @@ Almacena providers en JSON files bajo /data/providers/.
 """
 
 import json
-import os
 import uuid
 import httpx
 from pathlib import Path
@@ -357,6 +356,8 @@ async def seed_techeels():
     con sus zonas y tunnel existentes.
     """
     _ensure_dir()
+    if not settings.techeels_cf_api_token:
+        raise HTTPException(503, "Seed TecHeels no configurado: falta SIDECAR_TECHEELS_CF_API_TOKEN")
 
     # Verificar si ya existe
     for f in PROVIDERS_DIR.glob("*.json"):
@@ -376,16 +377,16 @@ async def seed_techeels():
     data = {
         "id": provider_id,
         "name": "TecHeels",
-        "cf_api_token": os.environ.get("CF_API_TOKEN_TECHEELS", ""),
-        "cf_account_id": os.environ.get("CF_ACCOUNT_ID_TECHEELS", ""),
+        "cf_api_token": settings.techeels_cf_api_token,
+        "cf_account_id": "256e61502b514f589ed470f88a7bc1cc",
         "zones": {
-            "techeels.io": os.environ.get("CF_ZONE_TECHEELS_IO", ""),
-            "femrd.net": os.environ.get("CF_ZONE_FEMRD_NET", ""),
+            "techeels.io": "74e0de9403953561808613739e1365c4",
+            "femrd.net": "2b3926393ea51ee27b8237d03a4420f5",
         },
         "tunnels": {
-            "techeels-tunnel": os.environ.get("CF_TUNNEL_TECHEELS", ""),
+            "techeels-tunnel": "0feeb163-6705-4061-a21b-aff6905506f5",
         },
-        "tunnel_token": os.environ.get("CF_API_TOKEN_TECHEELS", ""),
+        "tunnel_token": settings.techeels_tunnel_token,
         "domains": [
             "techeels.io",
             "www.techeels.io",

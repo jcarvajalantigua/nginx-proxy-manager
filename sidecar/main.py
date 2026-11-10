@@ -7,6 +7,7 @@ Middleware de IP whitelisting: 10.10.20.0/24, 100.0.0.0/8 (Tailscale), 172.x (Do
 """
 
 import ipaddress
+import secrets
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
@@ -146,6 +147,40 @@ class NetworkGuardMiddleware(BaseHTTPMiddleware):
         return response
 
 
+# ---- Autenticacion por API key compartida ----
+class ApiKeyAuthMiddleware(BaseHTTPMiddleware):
+    """Exige el token compartido del sidecar en TODAS las rutas.
+
+    El token se presenta como header X-API-Key o Authorization: Bearer.
+    Modo transicion (SIDECAR_API_KEY_ENFORCE=false): no bloquea, solo
+    registra los accesos sin token valido. Sin token configurado
+    (SIDECAR_API_KEY vacio): middleware inerte.
+    """
+
+    async def dispatch(self, request: Request, call_next):
+        expected = (settings.api_key or "").strip()
+        if not expected:
+            return await call_next(request)
+        presented = (
+            request.headers.get("x-api-key", "")
+            or request.headers.get("authorization", "").removeprefix("Bearer ").strip()
+        )
+        ok = bool(presented) and secrets.compare_digest(
+            presented.encode("utf-8"), expected.encode("utf-8")
+        )
+        if not ok:
+            if settings.api_key_enforce:
+                return JSONResponse(
+                    status_code=401,
+                    content={"detail": "No autorizado: se requiere la API key del sidecar"},
+                )
+            print(
+                "[sidecar-auth] acceso sin token valido (modo transicion): "
+                f"{request.method} {request.url.path}"
+            )
+        return await call_next(request)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Startup / Shutdown."""
@@ -194,6 +229,7 @@ Intentos desde internet publico retornan 403.
 
 # Middleware de seguridad - PRIMERO
 app.add_middleware(NetworkGuardMiddleware)
+app.add_middleware(ApiKeyAuthMiddleware)
 
 # CORS - solo redes internas
 app.add_middleware(

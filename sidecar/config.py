@@ -11,14 +11,16 @@ from typing import Optional
 class Settings(BaseSettings):
     # --- NPM API ---
     npm_api_url: str = Field(default="http://npm:81/api", description="URL interna de la API de NPM")
-    npm_admin_email: str = Field(default="", description="Email admin NPM (obligatorio por entorno)")
-    npm_admin_password: str = Field(default="", description="Password admin NPM (obligatorio por entorno)")
+    npm_admin_email: str = Field(default="soc@jeturing.com")
+    npm_admin_password: str = Field(default="")
 
     # --- Cloudflare ---
     cf_api_token: str = Field(default="")
-    cf_zone_id: str = Field(default="", description="Zone ID de Cloudflare (obligatorio por entorno)")
+    cf_zone_id: str = Field(default="4a83b88793ac3688486ace69b6ae80f9", description="Zone ID sajet.us")
     cf_tunnel_id: str = Field(default="", description="Tunnel ID para NPM gateway")
     cf_account_id: str = Field(default="")
+    techeels_cf_api_token: str = Field(default="", description="Token CF de la cuenta TecHeels (providers) - solo via entorno")
+    techeels_tunnel_token: str = Field(default="", description="Token del tunnel TecHeels (metadata del seed) - solo via entorno")
 
     # --- Red / Infraestructura ---
     network_subnet: str = Field(default="10.10.20.0/24")
@@ -57,6 +59,7 @@ class Settings(BaseSettings):
 
     # --- Seguridad ---
     api_key: str = Field(default="", description="API key para acceso externo (futuro)")
+    api_key_enforce: bool = Field(default=False, description="Si true, el middleware de API key responde 401 sin token valido")
     providers_file: str = Field(default="/app/data/providers.json", description="Archivo JSON de providers")
 
     model_config = {"env_prefix": "SIDECAR_", "env_file": ".env", "extra": "ignore"}
