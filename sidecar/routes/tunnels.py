@@ -78,6 +78,7 @@ async def get_tunnel(tunnel_id: str):
                 hostname=rule.get("hostname", ""),
                 service=rule.get("service", ""),
                 path=rule.get("path"),
+                origin_request=rule.get("originRequest"),
             )
             for rule in config.get("ingress", [])
         ]
@@ -120,6 +121,8 @@ async def update_tunnel_ingress(tunnel_id: str, config: TunnelConfigUpdate):
             entry["hostname"] = rule.hostname
         if rule.path:
             entry["path"] = rule.path
+        if rule.origin_request:
+            entry["originRequest"] = rule.origin_request
         ingress_rules.append(entry)
 
     # Asegurar catch-all al final
@@ -157,16 +160,39 @@ async def redirect_all_to_npm():
         raise HTTPException(400, "SIDECAR_CF_TUNNEL_ID no configurado")
 
     npm_service = f"http://{settings.pct_205_npm_host}:80"
+    npm_https_service = f"https://{settings.pct_205_npm_host}:443"
+    sajetpay_service = "http://10.10.20.202:80"
+    erp_service = f"http://{settings.pct_204_odoo19_host}:80"
+    gravitee_service = "http://10.10.20.207:8082"
 
-    # Todos los dominios conocidos → NPM
+    # NOTA (2026-11-10): esta lista es el ESPEJO EXACTO de la config viva buena
+    # del tunnel npm-gateway (v85): mismas reglas, mismo orden, mismo
+    # originRequest. Las reglas especificas van ANTES del comodin *.sajet.us y
+    # del catch-all. Los hosts NPM con Force SSL (app, demo, oraculo) entran
+    # por el :443 con originRequest completo o caen en bucle 301; sajetpay va
+    # directo al CT 202; app.jeturing.com directo al CT 204 (su host NPM
+    # apunta a un puerto muerto); api/apim a la puerta Gravitee del CT 207.
+    # Si cambia una regla en produccion, se actualiza ESTA lista en el mismo
+    # cambio o la proxima republicacion la borra.
+
+    # Espejo exacto de la config viva (v85) verificado regla a regla
     ingress = TunnelConfigUpdate(
         tunnel_id=settings.cf_tunnel_id,
         ingress=[
+            TunnelIngressRule(hostname="apim.sajet.us", service=gravitee_service),
+            TunnelIngressRule(hostname="api.sajet.us", service=gravitee_service),
             TunnelIngressRule(hostname="sajet.us", service=npm_service),
             TunnelIngressRule(hostname="www.sajet.us", service=npm_service),
+            TunnelIngressRule(hostname="demo.sajet.us", service=npm_https_service, origin_request={"noTLSVerify": True, "httpHostHeader": "demo.sajet.us", "originServerName": "demo.sajet.us"}),
+            TunnelIngressRule(hostname="demo.jeturing.com", service=npm_https_service, origin_request={"noTLSVerify": True, "httpHostHeader": "demo.jeturing.com", "originServerName": "demo.jeturing.com"}),
+            TunnelIngressRule(hostname="sajetpay.com", service=sajetpay_service),
+            TunnelIngressRule(hostname="www.sajetpay.com", service=sajetpay_service),
+            TunnelIngressRule(hostname="app.sajet.us", service=npm_https_service, origin_request={"noTLSVerify": True, "httpHostHeader": "app.sajet.us", "originServerName": "app.sajet.us"}),
+            TunnelIngressRule(hostname="oraculo.sajet.us", service=npm_https_service, origin_request={"noTLSVerify": True, "httpHostHeader": "oraculo.sajet.us", "originServerName": "oraculo.sajet.us"}),
             TunnelIngressRule(hostname="*.sajet.us", service=npm_service),
             TunnelIngressRule(hostname="jeturing.com", service=npm_service),
             TunnelIngressRule(hostname="www.jeturing.com", service=npm_service),
+            TunnelIngressRule(hostname="app.jeturing.com", service=erp_service, origin_request={"httpHostHeader": "app.jeturing.com", "originServerName": "app.jeturing.com"}),
             TunnelIngressRule(hostname="agroliferd.com", service=npm_service),
             TunnelIngressRule(hostname="www.agroliferd.com", service=npm_service),
             TunnelIngressRule(hostname="boletly.com", service=npm_service),

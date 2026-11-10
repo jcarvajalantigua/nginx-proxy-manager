@@ -96,6 +96,7 @@ class TunnelIngressRule(BaseModel):
     hostname: str
     service: str
     path: Optional[str] = None
+    origin_request: Optional[dict] = None
 
 
 class TunnelConfigUpdate(BaseModel):
