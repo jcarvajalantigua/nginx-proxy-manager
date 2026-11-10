@@ -22,6 +22,8 @@ services:
     image: jc21/nginx-proxy-manager:latest
     container_name: npm
     restart: unless-stopped
+    security_opt:
+      - apparmor=unconfined
     ports:
       - "80:80"     # HTTP público (recibe tráfico de CF Tunnel)
       - "443:443"   # HTTPS público
@@ -52,6 +54,16 @@ services:
       context: ./sidecar
       dockerfile: Dockerfile
     container_name: npm-sidecar
+    security_opt:
+      - apparmor=unconfined
+    env_file:
+      - ./sidecar-auth.env
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f -H \"X-API-Key: $$SIDECAR_API_KEY\" http://localhost:8888/ || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
     restart: unless-stopped
     ports:
       - "10.10.20.205:8888:8888"   # API — SOLO red local/VPN
@@ -59,7 +71,6 @@ services:
       TZ: "America/Santo_Domingo"
       SIDECAR_NPM_API_URL: "http://npm:81/api"
       SIDECAR_NPM_ADMIN_EMAIL: "soc@jeturing.com"
-      SIDECAR_NPM_ADMIN_PASSWORD: "***REMOVED***"
       # Cloudflare
       SIDECAR_CF_API_TOKEN: "${CF_API_TOKEN}"
       SIDECAR_CF_ACCOUNT_ID: "${CF_ACCOUNT_ID}"
@@ -101,7 +112,7 @@ services:
     image: cloudflare/cloudflared:latest
     container_name: npm-tunnel
     restart: unless-stopped
-    command: tunnel --no-autoupdate run
+    command: tunnel --no-autoupdate --protocol http2 run
     environment:
       TUNNEL_TOKEN: "${CF_TUNNEL_TOKEN}"
     depends_on:
