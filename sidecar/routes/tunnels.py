@@ -184,10 +184,11 @@ async def redirect_all_to_npm():
     # cambio o la proxima republicacion la borra.
 
     # Espejo exacto de la config viva (v86) verificado regla a regla.
-    # La reconciliacion del 2026-11-11 absorbio www.jeturing.com y
-    # repuesto.jeturing.com (app Repuesto, CT 207:3030, con originRequest):
-    # existian vivas sin estar en la plantilla y una republicacion las
-    # habria borrado.
+    # La reconciliacion del 2026-11-11 absorbio repuesto.jeturing.com
+    # (app Repuesto, CT 207:3030, con originRequest): existia viva sin
+    # estar en la plantilla y una republicacion la habria borrado.
+    # (www.jeturing.com ya estaba en la plantilla; una primera pasada
+    # la duplico y la verificacion regla a regla lo detecto y corrigio.)
     ingress = TunnelConfigUpdate(
         tunnel_id=settings.cf_tunnel_id,
         ingress=[
@@ -204,7 +205,6 @@ async def redirect_all_to_npm():
             TunnelIngressRule(hostname="oraculo.sajet.us", service=npm_https_service, origin_request={"noTLSVerify": True, "httpHostHeader": "oraculo.sajet.us", "originServerName": "oraculo.sajet.us"}),
             TunnelIngressRule(hostname="*.sajet.us", service=npm_service),
             TunnelIngressRule(hostname="jeturing.com", service=npm_service),
-            TunnelIngressRule(hostname="www.jeturing.com", service=npm_service),
             TunnelIngressRule(hostname="www.jeturing.com", service=npm_service),
             TunnelIngressRule(hostname="app.jeturing.com", service=erp_service, origin_request={"httpHostHeader": "app.jeturing.com", "originServerName": "app.jeturing.com"}),
             TunnelIngressRule(hostname="agroliferd.com", service=npm_service),
