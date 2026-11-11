@@ -164,6 +164,7 @@ async def redirect_all_to_npm():
     sajetpay_service = "http://10.10.20.202:80"
     erp_service = f"http://{settings.pct_204_odoo19_host}:80"
     gravitee_service = "http://10.10.20.207:8082"
+    gravitee_portal_service = "http://10.10.20.207:8085"
 
     # NOTA (2026-11-10): esta lista es el ESPEJO EXACTO de la config viva buena
     # del tunnel npm-gateway (v85): mismas reglas, mismo orden, mismo
@@ -171,7 +172,11 @@ async def redirect_all_to_npm():
     # del catch-all. Los hosts NPM con Force SSL (app, demo, oraculo) entran
     # por el :443 con originRequest completo o caen en bucle 301; sajetpay va
     # directo al CT 202; app.jeturing.com directo al CT 204 (su host NPM
-    # apunta a un puerto muerto); api/apim a la puerta Gravitee del CT 207.
+    # apunta a un puerto muerto); api/apim a la puerta Gravitee del CT 207;
+    # developers al portal de desarrolladores Gravitee del CT 207 (8085):
+    # documentacion publica de la API de plataforma (aprobado por el
+    # dueno 2026-11-11). El portal proxifica solo /portal/* contra
+    # management; la consola (8084) y /management/* NUNCA se exponen.
     # Si cambia una regla en produccion, se actualiza ESTA lista en el mismo
     # cambio o la proxima republicacion la borra.
 
@@ -181,6 +186,7 @@ async def redirect_all_to_npm():
         ingress=[
             TunnelIngressRule(hostname="apim.sajet.us", service=gravitee_service),
             TunnelIngressRule(hostname="api.sajet.us", service=gravitee_service),
+            TunnelIngressRule(hostname="developers.sajet.us", service=gravitee_portal_service),
             TunnelIngressRule(hostname="sajet.us", service=npm_service),
             TunnelIngressRule(hostname="www.sajet.us", service=npm_service),
             TunnelIngressRule(hostname="demo.sajet.us", service=npm_https_service, origin_request={"noTLSVerify": True, "httpHostHeader": "demo.sajet.us", "originServerName": "demo.sajet.us"}),
