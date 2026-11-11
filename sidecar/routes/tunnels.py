@@ -164,7 +164,12 @@ async def redirect_all_to_npm():
     sajetpay_service = "http://10.10.20.202:80"
     erp_service = f"http://{settings.pct_204_odoo19_host}:80"
     gravitee_service = "http://10.10.20.207:8082"
-    gravitee_portal_service = "http://10.10.20.207:8085"
+    # developers.sajet.us entra por la puerta publica del portal
+    # (gravitee-portal-proxy en el 207): sirve la SPA del portal-ui
+    # y proxifica SOLO /portal/* a la API REST del portal del
+    # management-api:8083. /management/* y la consola (8084) jamas
+    # se publican. El 8085 directo no sirve: no proxifica /portal/.
+    gravitee_portal_service = "http://10.10.20.207:8086"
     repuesto_service = "http://10.10.20.207:3030"
 
     # NOTA (2026-11-10, reconciliada 2026-11-11): esta lista es el ESPEJO
