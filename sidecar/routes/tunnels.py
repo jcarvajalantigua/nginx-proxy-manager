@@ -162,6 +162,8 @@ async def redirect_all_to_npm():
     npm_service = f"http://{settings.pct_205_npm_host}:80"
     npm_https_service = f"https://{settings.pct_205_npm_host}:443"
     sajetpay_service = "http://10.10.20.202:80"
+    # El DSAM (Sajet interno) vive en el mismo nginx del CT 202.
+    dsm_service = "http://10.10.20.202:80"
     erp_service = f"http://{settings.pct_204_odoo19_host}:80"
     gravitee_service = "http://10.10.20.207:8082"
     # developers.sajet.us entra por la puerta publica del portal
@@ -216,6 +218,17 @@ async def redirect_all_to_npm():
             TunnelIngressRule(hostname="www.sajetpay.com", service=sajetpay_service),
             TunnelIngressRule(hostname="app.sajet.us", service=npm_https_service, origin_request={"noTLSVerify": True, "httpHostHeader": "app.sajet.us", "originServerName": "app.sajet.us"}),
             TunnelIngressRule(hostname="oraculo.sajet.us", service=npm_https_service, origin_request={"noTLSVerify": True, "httpHostHeader": "oraculo.sajet.us", "originServerName": "oraculo.sajet.us"}),
+            # cehelab.sajet.us (2026-11-11): su host NPM (#54) apunta al
+            # sitio estatico del tenant en el CT 209, que no tiene
+            # superficie de acceso: /login y todo el DSAM caian en el 404
+            # de Hestia. La superficie interna de Sajet (login canonico,
+            # reset, el JS del login, /api/ del DSAM y /static/) entra
+            # DIRECTA al nginx del CT 202 - el mismo que en origen
+            # responde la canonica por el Host cehelab - antes del
+            # comodin; el resto del subdominio sigue a NPM y a su sitio
+            # en el 209 como hasta ahora.
+            TunnelIngressRule(hostname="cehelab.sajet.us", path="^/((login|reset-password)(\\.html)?|login/admin|jt-portal-sajet-us\\.js)$", service=dsm_service),
+            TunnelIngressRule(hostname="cehelab.sajet.us", path="^/(api|static)(/.*)?$", service=dsm_service),
             TunnelIngressRule(hostname="*.sajet.us", service=npm_service),
             TunnelIngressRule(hostname="jeturing.com", service=npm_service),
             TunnelIngressRule(hostname="www.jeturing.com", service=npm_service),
