@@ -170,11 +170,15 @@ async def redirect_all_to_npm():
     # management-api:8083. /management/* y la consola (8084) jamas
     # se publican. El 8085 directo no sirve: no proxifica /portal/.
     gravitee_portal_service = "http://10.10.20.207:8086"
+    # id.sajet.us es el gateway de Gravitee Access Management (puente
+    # de identidad hacia Sajet ID): se publica SOLO el gateway de
+    # login (8092); la gestion de AM (8093/8096) jamas se expone.
+    gravitee_am_service = "http://10.10.20.207:8092"
     repuesto_service = "http://10.10.20.207:3030"
 
     # NOTA (2026-11-10, reconciliada 2026-11-11): esta lista es el ESPEJO
     # EXACTO de la config viva buena del tunnel npm-gateway (v86, 29
-    # reglas) MAS la regla developers aprobada el 2026-11-11 (30 reglas):
+    # reglas) MAS las reglas developers e id aprobadas el 2026-11-11 (31 reglas):
     # mismas reglas, mismo orden, mismo
     # originRequest. Las reglas especificas van ANTES del comodin *.sajet.us y
     # del catch-all. Los hosts NPM con Force SSL (app, demo, oraculo) entran
@@ -183,7 +187,10 @@ async def redirect_all_to_npm():
     # apunta a un puerto muerto); api/apim a la puerta Gravitee del CT 207;
     # developers al portal de desarrolladores Gravitee del CT 207 (8085):
     # documentacion publica de la API de plataforma (aprobado por el
-    # dueno 2026-11-11). El portal proxifica solo /portal/* contra
+    # dueno 2026-11-11); id al gateway de Access Management del CT 207
+    # (8092): login federado a Sajet ID (aprobado por el dueno
+    # 2026-11-11), la gestion de AM (8093/8096) nunca se expone.
+    # El portal proxifica solo /portal/* contra
     # management; la consola (8084) y /management/* NUNCA se exponen.
     # Si cambia una regla en produccion, se actualiza ESTA lista en el mismo
     # cambio o la proxima republicacion la borra.
@@ -200,6 +207,7 @@ async def redirect_all_to_npm():
             TunnelIngressRule(hostname="apim.sajet.us", service=gravitee_service),
             TunnelIngressRule(hostname="api.sajet.us", service=gravitee_service),
             TunnelIngressRule(hostname="developers.sajet.us", service=gravitee_portal_service),
+            TunnelIngressRule(hostname="id.sajet.us", service=gravitee_am_service),
             TunnelIngressRule(hostname="sajet.us", service=npm_service),
             TunnelIngressRule(hostname="www.sajet.us", service=npm_service),
             TunnelIngressRule(hostname="demo.sajet.us", service=npm_https_service, origin_request={"noTLSVerify": True, "httpHostHeader": "demo.sajet.us", "originServerName": "demo.sajet.us"}),
