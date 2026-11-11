@@ -165,9 +165,12 @@ async def redirect_all_to_npm():
     erp_service = f"http://{settings.pct_204_odoo19_host}:80"
     gravitee_service = "http://10.10.20.207:8082"
     gravitee_portal_service = "http://10.10.20.207:8085"
+    repuesto_service = "http://10.10.20.207:3030"
 
-    # NOTA (2026-11-10): esta lista es el ESPEJO EXACTO de la config viva buena
-    # del tunnel npm-gateway (v85): mismas reglas, mismo orden, mismo
+    # NOTA (2026-11-10, reconciliada 2026-11-11): esta lista es el ESPEJO
+    # EXACTO de la config viva buena del tunnel npm-gateway (v86, 29
+    # reglas) MAS la regla developers aprobada el 2026-11-11 (30 reglas):
+    # mismas reglas, mismo orden, mismo
     # originRequest. Las reglas especificas van ANTES del comodin *.sajet.us y
     # del catch-all. Los hosts NPM con Force SSL (app, demo, oraculo) entran
     # por el :443 con originRequest completo o caen en bucle 301; sajetpay va
@@ -180,7 +183,11 @@ async def redirect_all_to_npm():
     # Si cambia una regla en produccion, se actualiza ESTA lista en el mismo
     # cambio o la proxima republicacion la borra.
 
-    # Espejo exacto de la config viva (v85) verificado regla a regla
+    # Espejo exacto de la config viva (v86) verificado regla a regla.
+    # La reconciliacion del 2026-11-11 absorbio www.jeturing.com y
+    # repuesto.jeturing.com (app Repuesto, CT 207:3030, con originRequest):
+    # existian vivas sin estar en la plantilla y una republicacion las
+    # habria borrado.
     ingress = TunnelConfigUpdate(
         tunnel_id=settings.cf_tunnel_id,
         ingress=[
@@ -198,6 +205,7 @@ async def redirect_all_to_npm():
             TunnelIngressRule(hostname="*.sajet.us", service=npm_service),
             TunnelIngressRule(hostname="jeturing.com", service=npm_service),
             TunnelIngressRule(hostname="www.jeturing.com", service=npm_service),
+            TunnelIngressRule(hostname="www.jeturing.com", service=npm_service),
             TunnelIngressRule(hostname="app.jeturing.com", service=erp_service, origin_request={"httpHostHeader": "app.jeturing.com", "originServerName": "app.jeturing.com"}),
             TunnelIngressRule(hostname="agroliferd.com", service=npm_service),
             TunnelIngressRule(hostname="www.agroliferd.com", service=npm_service),
@@ -212,6 +220,7 @@ async def redirect_all_to_npm():
             TunnelIngressRule(hostname="impulse-max.com", service=npm_service),
             TunnelIngressRule(hostname="www.impulse-max.com", service=npm_service),
             TunnelIngressRule(hostname="mail.sajet.us", service=npm_service),
+            TunnelIngressRule(hostname="repuesto.jeturing.com", service=repuesto_service, origin_request={"httpHostHeader": "repuesto.jeturing.com", "originServerName": "repuesto.jeturing.com"}),
             # proxy.sajet.us y api-gateway.sajet.us NO se exponen via tunnel
             # Solo accesibles via red interna (10.10.20.x) o VPN (Tailscale)
             # Catch-all
